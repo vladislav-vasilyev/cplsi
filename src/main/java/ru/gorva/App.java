@@ -123,7 +123,7 @@ public class App {
      * @param file File with data set.
      * @return Normalized Mutual Information.
      */
-    static double processFile(File file, boolean printInfo, double sideQuantum,
+    static double processFile(File file, boolean printInfo, double sideQuantum, double lambda,
                               int labelIndex, int... skip) {
         List<BaseType[]> values;
         Map<BaseType[], BaseType> labels;
@@ -144,7 +144,8 @@ public class App {
                     getSubsetOfLabels(labels, distinctLabels, sideQuantum, 0),
                     distinctLabels,
                     distinctLabels.size());
-            cplsi.cluster(100);
+            cplsi.setMeasure(new DissimilarityMeasure());
+            cplsi.cluster(lambda);
 
             Cluster[] clusters = cplsi.getClusters();
             // Calculate NMI measure.
@@ -172,7 +173,7 @@ public class App {
         while (quantum < 0.51) {
             nmi = 0;
             for (int i = 0; i < n; ++i)
-                nmi += processFile(file, false, quantum, index, skip);
+                nmi += processFile(file, false, quantum, 100, index, skip);
             nmi /= n;
             stream.println(String.format("| %4.2f | %9.7f |", quantum, nmi));
             quantum += 0.1;

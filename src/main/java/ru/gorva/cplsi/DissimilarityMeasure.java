@@ -17,15 +17,14 @@
  *
  *
  */
+
 package ru.gorva.cplsi;
 
 /**
- * This interface represents the distance measure for DataItems.
- *
  * @author Vladyslav Vasyliev
- *         Created on 25.11.16.
+ *         Created on 26.11.16.
  */
-public interface DistanceMeasure {
+public class DissimilarityMeasure implements SimilarityMeasure {
     /**
      * Calculates distance between two {@code DataItem} objects.
      *
@@ -35,5 +34,9 @@ public interface DistanceMeasure {
      * @param lambda Trade-off parameter.
      * @return Distance between specified {@code DataItem} objects.
      */
-    double distance(DataItem obj1, DataItem obj2, int k, double lambda);
+    @Override
+    public double distance(DataItem obj1, DataItem obj2, int k, double lambda) {
+        // TODO: huang98extensions.pdf
+        return 0;
+    }
 }

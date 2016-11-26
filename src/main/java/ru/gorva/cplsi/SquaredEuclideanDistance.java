@@ -27,7 +27,7 @@ import ru.gorva.data.BaseType;
  * @author Vladyslav Vasyliev
  *         Created on 25.11.16.
  */
-public class SquaredEuclideanDistance implements DistanceMeasure {
+public class SquaredEuclideanDistance implements SimilarityMeasure {
 
     /**
      * @return Real value for the given {@code BaseType} object.

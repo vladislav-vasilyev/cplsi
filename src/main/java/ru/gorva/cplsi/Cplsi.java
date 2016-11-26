@@ -42,7 +42,7 @@ public class Cplsi {
     private Map<BaseType[], BaseType> origLabels;     // Index in 'values' -> 'cluster label'
     private List<BaseType[]> values;                   // Initial values
 
-    private DistanceMeasure measure;        // Distance measure of the clustering algorithm.
+    private SimilarityMeasure measure;        // Distance measure of the clustering algorithm.
 
     private List<DataItem> matrix;           // Concatenated matrix.
 
@@ -92,11 +92,11 @@ public class Cplsi {
     // Getters and Setters
     // ------------------------------------------------------------------------
 
-    public DistanceMeasure getMeasure() {
+    public SimilarityMeasure getMeasure() {
         return measure;
     }
 
-    public void setMeasure(DistanceMeasure measure) {
+    public void setMeasure(SimilarityMeasure measure) {
         this.measure = measure;
     }
 
@@ -193,33 +193,32 @@ public class Cplsi {
      * @return Clusters with initialized centroids and labels.
      */
     private Cluster[] initializeClusters(List<DataItem> matrix, int k) {
-        Cluster[] result = new Cluster[k];
-        Map<BaseType, DataItem> centroids = new HashMap<>();
+        Cluster[] clusters = new Cluster[k];
+        // Initialize clusters.
+        for (int i = 0; i < k; ++i)
+            clusters[i] = new Cluster(reverseLabelMap.get(i));
+        // Split all values with side information into distinct clusters.
+        for (DataItem item : matrix)
+            if (item.hasSideInformation()) {
+                int labelIndex = labelMap.get(item.getLabel());
+                clusters[labelIndex].add(item);
+            }
+        // If there are empty clusters, then assign random values without labels to them.
         int index = 0;
         DataItem item;
-        // Select random value from the distinct clusters.
-        while (centroids.size() < k && index < matrix.size()) {
-            item = matrix.get(index);
-            if (item.hasSideInformation())
-                centroids.put(item.getLabel(), item);
-            ++index;
-        }
-        index = 0;
-        // Initialize clusters.
-        for (DataItem dataItem : centroids.values())
-            result[index++] = new Cluster(dataItem.getLabel(), dataItem);
-        // Check if centroids for all clusters were initialized.
-        if (index < result.length) {
-            Set<BaseType> uninitialized = new HashSet<>(labelSet);
-            uninitialized.removeAll(centroids.keySet());
-            // Initialize uninitialized clusters.
-            int i = 0;
-            for (BaseType label : uninitialized) {
-                while (matrix.get(i++).hasSideInformation());
-                result[index++] = new Cluster(label, matrix.get(i));
-            }
-        }
-        return result;
+        for (Cluster cluster : clusters)
+            if (cluster.size() == 0)
+                for (; index < matrix.size(); ++index)
+                    if (!matrix.get(index).hasSideInformation()) {
+                        item = matrix.get(index++);
+                        assert (item != null);
+                        cluster.add(item);
+                        break;
+                    }
+        this.clusters = clusters;
+        // Calculate coordinates of centroids.
+        updateCentroids();
+        return clusters;
     }
 
     /**
@@ -264,6 +263,8 @@ public class Cplsi {
         NumericType[] mean;
         for (Cluster cluster : clusters) {
             if (cluster.size() != 0) {
+                assert (cluster.size() > 0);
+                assert (cluster.get(0) != null);
                 int dataLength = cluster.get(0).size();
                 mean = createRealArray(dataLength);
                 dataLength -= k;
